@@ -1,5 +1,6 @@
 import math
 from constants import SIM_DT, ROAD_DRAG_COEFF, GAS_PEDAL_TO_ACC, BRAKE_PEDAL_TO_DEACC, CAR_SAFE_DIST, MAX_SAFE_VEL
+import pygame as pg
 
 class Car():
     def __init__(self):
@@ -7,9 +8,9 @@ class Car():
         self.y = 0
         self.speed = 0
         self.heading = 0
-        self.start_time = 0
         self.road = None
         self.length = 4
+        self.image = pg.image.load("car_0.png")
 
     def get_xy(self):
         return self.x, self.y
@@ -22,13 +23,10 @@ class Car():
     def set_heading(self, heading):
         self.heading = heading
 
-    def set_start_time(self, start_time):
-        self.start_time = start_time
-
     def set_road(self, road):
         self.road = road
 
-    def __get_front_car_dy(self):
+    def __get_front_car_dx(self):
         lane = self.road.get_lane_from_y(self.y)
         cars = [c for c in self.road.cars[lane] if c != self]
         distances_from_front_cars = [(c.x - self.x) if c.x >= self.x else (self.road.max_length + c.x - self.x) for c in cars]
@@ -36,7 +34,7 @@ class Car():
 
     def __decide_control_inputs(self):
         steering_angle, gas, brake = 0, 0, 0
-        distances = self.__get_front_car_dy()
+        distances = self.__get_front_car_dx()
         closest_car_distance = min(distances) if len(distances)>0 else CAR_SAFE_DIST+10
         if closest_car_distance < CAR_SAFE_DIST:
             brake = 3*(100*self.speed/(closest_car_distance+1))
@@ -85,7 +83,8 @@ class Car():
         return self.x, self.y, self.heading, self.speed
 
     def step(self):
-        self.update_states()
+        return self.update_states()
+
 
 
 class IntelligentCar(Car):
@@ -94,7 +93,7 @@ class IntelligentCar(Car):
 
     def __decide_control_inputs(self):
         steering_angle, gas, brake = 0, 0, 0
-        distances = self.__get_front_car_dy()
+        distances = self.__get_front_car_dx()
         closest_car_distance = min(distances)
         if closest_car_distance < CAR_SAFE_DIST:
             brake = 3 * (100 * self.speed / (closest_car_distance + 1))
