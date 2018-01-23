@@ -4,6 +4,7 @@ from constants import CAR_SAFE_DIST
 
 import random
 
+
 class Simulation:
 
     def __init__(self):
