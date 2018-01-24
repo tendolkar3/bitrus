@@ -4,9 +4,11 @@ from constants import SCREEN_HEIGHT, SCREEN_WIDTH, BLACK, WHITE, PIXEL_PER_METER
 import math
 from math import sqrt, atan2, cos, sin
 from car import IntelligentCar
+import sys
+
 
 class Display:
-    def __init__(self):
+    def __init__(self, simulation):
         self.SCREEN_WIDTH = SCREEN_WIDTH
         self.SCREEN_HEIGHT = SCREEN_HEIGHT
 
@@ -20,7 +22,7 @@ class Display:
         self.clock = pg.time.Clock()
         self.paused = False
 
-        self.s = Simulation()
+        self.sim = simulation
 
     def __draw_dashed_line(self, coords, wallcolor=(255, 255, 255)):
         length = sqrt((coords[1][1] - coords[0][1]) ** 2 + (coords[1][0] - coords[0][0]) ** 2)
@@ -37,7 +39,7 @@ class Display:
         road_start = int(SCREEN_WIDTH/4)
         road_end = road_start + int(SCREEN_WIDTH/2)
         pg.draw.polygon(self.screen, BLACK, ((road_start, 0),(road_end, 0),(road_end, SCREEN_HEIGHT),(road_start, SCREEN_HEIGHT)))
-        nl = self.s.infinite_road.num_lanes
+        nl = self.sim.infinite_road.num_lanes
         lane_width = SCREEN_WIDTH/(2*nl)
         for l in range(nl):
             if l==0:
@@ -50,7 +52,7 @@ class Display:
         x,y = car.get_xy()
         y,x = (10*x), 10*y+road_start
         image = pg.transform.rotate(car.image, car.heading-90)
-        rel_x,rel_y = self.s.infinite_road.get_camera_coords()
+        rel_x,rel_y = self.sim.infinite_road.get_camera_coords()
         print(rel_y)
         x, y = x, y - rel_y + SCREEN_HEIGHT/2
         self.screen.blit(image, (x, y))
@@ -59,15 +61,16 @@ class Display:
     def draw(self):
         self.screen.fill(WHITE)
         self.draw_road()
-        cars = [c for lane in self.s.infinite_road.cars for c in lane]
+        cars = [c for lane in self.sim.infinite_road.cars for c in lane]
         for car in cars:
             if isinstance(car, IntelligentCar):
                 rel_x, rel_y = car.get_xy()
-                self.s.infinite_road.set_camera_coords(rel_y*10, rel_x*10)
+                self.sim.infinite_road.set_camera_coords(rel_y * 10, rel_x * 10)
                 break
         for car in cars:
             self.draw_car(car)
 
+    # Todo: run method should not be on Display class
     def run(self):
         while True:
             # Limit frame speed to 30 FPS
@@ -83,7 +86,7 @@ class Display:
                         self.paused = not self.paused
 
             if not self.paused:
-                self.s.step()
+                self.sim.sim_step()
                 self.draw()
 
             pg.display.flip()
@@ -91,6 +94,7 @@ class Display:
 
     def quit(self):
         sys.exit()
+
 
 if __name__ == "__main__":
     sim = Display()

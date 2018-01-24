@@ -47,3 +47,6 @@ class InfiniteRoad:
         self.cars = [[] for _ in range(self.num_lanes)]
         for c in cars:
             self.__add_to_storage(c)
+
+
+

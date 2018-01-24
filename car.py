@@ -1,6 +1,8 @@
 import math
 from constants import SIM_DT, ROAD_DRAG_COEFF, GAS_PEDAL_TO_ACC, BRAKE_PEDAL_TO_DEACC, CAR_SAFE_DIST, MAX_SAFE_VEL
 import pygame as pg
+from spaces import DiscreteSpace, BoxSpace
+
 
 class Car():
     def __init__(self):
@@ -76,34 +78,34 @@ class Car():
     def __clip_states(self):
         self.set_xy(self.x % self.road.max_length, self.y)
 
-    def update_states(self):
-        steering, gas, brake = self.__decide_control_inputs()
+    def _update_states(self, action=None):
+        if action is None:
+            steering, gas, brake = self.__decide_control_inputs()
+        else:
+            steering = action[0][0]
+            if action[1][0] > 0:
+                gas = action[1][0]
+                brake = 0
+            else:
+                gas = 0
+                brake = action[1][0]
+
         self.__control_car(steering, gas, brake)
         self.__clip_states()
         return self.x, self.y, self.heading, self.speed
 
-    def step(self):
-        return self.update_states()
-
+    def step(self, action=None):
+        return self._update_states()
 
 
 class IntelligentCar(Car):
     def __init__(self):
         Car.__init__(self)
 
-    def __decide_control_inputs(self):
-        steering_angle, gas, brake = 0, 0, 0
-        distances = self.__get_front_car_dx()
-        closest_car_distance = min(distances)
-        if closest_car_distance < CAR_SAFE_DIST:
-            brake = 3 * (100 * self.speed / (closest_car_distance + 1))
-            gas = 0
-        else:
-            if self.speed <= MAX_SAFE_VEL:
-                gas = 3 * (10 * closest_car_distance / (self.speed + 1))
-                gas = gas if gas < 5 and self.speed + gas * 0.1 < MAX_SAFE_VEL else 5
-                brake = 0
-            else:
-                gas = 0
-                brake = 3 * (100 * self.speed / (closest_car_distance + 1))
-        return steering_angle, gas, brake
+    def step(self, action=None):
+        if action is None:
+            action_space = tuple((BoxSpace(low=-math.pi/4, high=math.pi/4, shape=(1,)),
+                                  BoxSpace(low=-5, high=5, shape=(1,))))
+            action = tuple((action_space[0].sample(), action_space[1].sample()))
+
+        return self._update_states(action)
