@@ -1,5 +1,5 @@
 from simulation import Simulation
-from main import Display
+from display import Display
 import numpy as np
 import math
 from spaces import DiscreteSpace, BoxSpace
@@ -22,8 +22,8 @@ class Env(object):
                                         ))
         self.action_space = tuple((BoxSpace(low=-math.pi/4, high=math.pi/4, shape=(1,)),
                                    BoxSpace(low=-5, high=5, shape=(1,))))
-        self.simulation = Simulation
-        self.display = Display(self.simulation)
+        self.simulation = Simulation()
+        self.display = Display()
         self.status = bool
 
     def step(self, action):
@@ -40,8 +40,15 @@ class Env(object):
         # If self.status is True, then the car is in the game, do not terminate.
         done = not self.status
         info = {}
+        if done:
+            self._terminate_episode()
 
         return observation, reward, done, info
+
+    def _terminate_episode(self):
+
+        self.simulation = None
+        self.display = None
 
     def _take_action(self, action):
 
@@ -49,7 +56,10 @@ class Env(object):
 
     def _get_observation(self):
 
-        observation = self.simulation.get_observation()
+        if self.status:
+            observation = self.simulation.get_observation()
+        else:
+            observation = "TERMINAL STATE"
         return observation
 
     def _get_reward(self):
@@ -61,15 +71,17 @@ class Env(object):
         """
         reset the environment
         """
-        self.simulation = Simulation
-        self.display = Display(self.simulation)
+        self.simulation = Simulation()
+        self.display = Display()
+        self.render()
         return self.simulation.get_observation()
 
     def render(self):
         """
         for display
         """
-        self.display.draw()
+        self.display.draw(self.simulation.infinite_road, self.simulation.intelligent_car)
+        # self.display.run(self.simulation.infinite_road)
 
     def seed(self, seed=None):
         """

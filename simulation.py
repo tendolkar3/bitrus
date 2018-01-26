@@ -35,7 +35,10 @@ class Simulation:
                 else:
                     c.step(action)
 
-        self.infinite_road.update_state()
+        try:
+            self.infinite_road.update_state()
+        except IndexError:
+            return False
 
         return self.get_status(self.intelligent_car)
 
@@ -49,8 +52,10 @@ class Simulation:
         x, y = car.get_xy()
         lane = self.infinite_road.get_lane_from_y(y)
         if car.speed > MAX_SAFE_VEL:
+            print('vel')
             status = False
-        elif (lane < 0) or (lane >= self.NUM_CARS):
+        elif (lane < 0) or (lane >= self.NUM_LANES):
+            print('lane')
             status = False
         else:
             ind = self.infinite_road.cars[lane].index(car)
@@ -59,21 +64,25 @@ class Simulation:
                 status = True
 
             elif ind == len(self.infinite_road.cars[lane])-1:
-                back_car = self.infinite_road.cars[lane][ind-1]
-                if abs(car.x - back_car.x) <= car.length + CAR_SAFE_DIST/2:
+                front_car = self.infinite_road.cars[lane][ind-1]
+                if abs(car.x - front_car.x) <= car.length + CAR_SAFE_DIST/2:
+                    print('front')
                     status = False
 
             elif ind == 0:
-                front_car = self.infinite_road.cars[lane][ind+1]
-                if abs(car.x - front_car.x) <= car.length + CAR_SAFE_DIST/2:
+                back_car = self.infinite_road.cars[lane][ind+1]
+                if abs(car.x - back_car.x) <= car.length + CAR_SAFE_DIST/2:
+                    print('back')
                     status = False
 
             else:
-                front_car = self.infinite_road.cars[lane][ind+1]
-                back_car = self.infinite_road.cars[lane][ind-1]
+                front_car = self.infinite_road.cars[lane][ind-1]
+                back_car = self.infinite_road.cars[lane][ind+1]
                 if abs(car.x - back_car.x) <= car.length + CAR_SAFE_DIST / 2:
+                    print('back')
                     status = False
                 if abs(car.x - front_car.x) <= car.length + CAR_SAFE_DIST/2:
+                    print('front')
                     status = False
 
         return status
@@ -97,27 +106,35 @@ class Simulation:
         car = self.intelligent_car
         x, y = car.get_xy()
         lane = self.infinite_road.get_lane_from_y(y)
+        if lane < 0 or lane >= self.infinite_road.num_lanes:
+
+            raise IndexError
+
         ind = self.infinite_road.cars[lane].index(car)
 
         if ind == len(self.infinite_road.cars[lane]) - 1 and ind == 0:
+            print("case 1")
             front_car = None
             front_front_car = None
 
         elif ind == len(self.infinite_road.cars[lane]) - 1:
-            front_car = None
-            front_front_car = None
-
-        elif ind == 0:
-            front_car = self.infinite_road.cars[lane][ind + 1]
-            if len(self.infinite_road.cars[lane])> ind+2:
-                front_front_car = self.infinite_road.cars[lane][ind+2]
+            print("case 2")
+            front_car = self.infinite_road.cars[lane][ind - 1]
+            if ind - 2 > 0:
+                front_front_car = self.infinite_road.cars[lane][ind-2]
             else:
                 front_front_car = None
 
+        elif ind == 0:
+            print("case 3")
+            front_car = None
+            front_front_car = None
+
         else:
-            front_car = self.infinite_road.cars[lane][ind + 1]
-            if len(self.infinite_road.cars[lane])> ind+2:
-                front_front_car = self.infinite_road.cars[lane][ind+2]
+            print("case 4")
+            front_car = self.infinite_road.cars[lane][ind - 1]
+            if ind-2 > 0:
+                front_front_car = self.infinite_road.cars[lane][ind-2]
             else:
                 front_front_car = None
 
@@ -142,7 +159,7 @@ class Simulation:
         if lane == 0:
             right_lane = self.infinite_road.cars[lane+1]
         elif lane == self.infinite_road.num_lanes-1:
-            left_lane = self.infinite_road.cars[lane + 1]
+            left_lane = self.infinite_road.cars[lane - 1]
         elif 0 < lane < self.infinite_road.num_lanes:
             right_lane = self.infinite_road.cars[lane+1]
             left_lane = self.infinite_road.cars[lane-1]
@@ -157,20 +174,20 @@ class Simulation:
         if right_lane is not None:
             for r_car in right_lane:
                 if (r_car.x < x - 1*(car.length / 2 + CAR_SAFE_DIST)) and (r_car.x > x - 3*(car.length / 2 + CAR_SAFE_DIST)):
-                    right_0 = 1
+                    right_0 = np.array([1])
                 if (r_car.x < x + 1*(car.length / 2 + CAR_SAFE_DIST)) and (r_car.x > x - 1*(car.length / 2 + CAR_SAFE_DIST)):
-                    right_1 = 1
+                    right_1 = np.array([1])
                 if (r_car.x < x + 3*(car.length / 2 + CAR_SAFE_DIST)) and (r_car.x > x + 1*(car.length / 2 + CAR_SAFE_DIST)):
-                    right_2 = 1
+                    right_2 = np.array([1])
 
         if left_lane is not None:
             for l_car in left_lane:
                 if (l_car.x < x - 1 * (car.length / 2 + CAR_SAFE_DIST)) and (l_car.x > x - 3 * (car.length / 2 + CAR_SAFE_DIST)):
-                    left_0 = 1
+                    left_0 = np.array([1])
                 if (l_car.x < x + 1 * (car.length / 2 + CAR_SAFE_DIST)) and (l_car.x > x - 1 * (car.length / 2 + CAR_SAFE_DIST)):
-                    left_1 = 1
+                    left_1 = np.array([1])
                 if (l_car.x < x + 3 * (car.length / 2 + CAR_SAFE_DIST)) and (l_car.x > x + 1 * (car.length / 2 + CAR_SAFE_DIST)):
-                    left_2 = 1
+                    left_2 = np.array([1])
 
         observation = tuple((front, front_front, right_0, right_1, right_2, left_0, left_1, left_2))
 

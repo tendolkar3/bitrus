@@ -27,26 +27,36 @@ class InfiniteRoad:
     def __add_to_storage(self, car):
         x, y = car.get_xy()
         lane = self.get_lane_from_y(y)
-        num_cars_in_lane = len(self.cars[lane])
-        if num_cars_in_lane==0:
+        # print(lane, car.get_xy())
+        if lane < 0 or lane > self.num_lanes-1:
+            raise IndexError
+        else:
+            num_cars_in_lane = len(self.cars[lane])
+            if num_cars_in_lane==0:
+                self.cars[lane].append(car)
+                return
+            for i, existing_car in enumerate(self.cars[lane]):
+                existing_car_x, existing_car_y = existing_car.get_xy()
+                if x > existing_car_x:
+                    self.cars[lane].insert(i, car)
+                    return
             self.cars[lane].append(car)
             return
-        for i, existing_car in enumerate(self.cars[lane]):
-            existing_car_x, existing_car_y = existing_car.get_xy()
-            if x > existing_car_x:
-                self.cars[lane].insert(i, car)
-                return
-        self.cars[lane].append(car)
-        return
 
     def get_lane_from_y(self, y):
-        return int(y // self.lane_width)
+        if y < self.lane_width* self.num_lanes or y> 0:
+            return int(y // self.lane_width)
+        else:
+            return -1
 
     def update_state(self):
         cars = [c for lane in self.cars for c in lane]
         self.cars = [[] for _ in range(self.num_lanes)]
         for c in cars:
-            self.__add_to_storage(c)
+            try:
+                self.__add_to_storage(c)
+            except IndexError:
+                raise IndexError
 
 
 
