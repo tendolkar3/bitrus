@@ -65,23 +65,23 @@ class Simulation:
 
             elif ind == len(self.infinite_road.cars[lane])-1:
                 front_car = self.infinite_road.cars[lane][ind-1]
-                if abs(car.x - front_car.x) <= car.length + CAR_SAFE_DIST/2:
+                if abs(car.x - front_car.x) <= car.length + CAR_SAFE_DIST/4:
                     print('front')
                     status = False
 
             elif ind == 0:
                 back_car = self.infinite_road.cars[lane][ind+1]
-                if abs(car.x - back_car.x) <= car.length + CAR_SAFE_DIST/2:
+                if abs(car.x - back_car.x) <= car.length + CAR_SAFE_DIST/4:
                     print('back')
                     status = False
 
             else:
                 front_car = self.infinite_road.cars[lane][ind-1]
                 back_car = self.infinite_road.cars[lane][ind+1]
-                if abs(car.x - back_car.x) <= car.length + CAR_SAFE_DIST / 2:
+                if abs(car.x - back_car.x) <= car.length + CAR_SAFE_DIST / 4:
                     print('back')
                     status = False
-                if abs(car.x - front_car.x) <= car.length + CAR_SAFE_DIST/2:
+                if abs(car.x - front_car.x) <= car.length + CAR_SAFE_DIST/4:
                     print('front')
                     status = False
 
@@ -139,11 +139,11 @@ class Simulation:
                 front_front_car = None
 
         if front_car is not None:
-            front = np.array([front_car.x])
+            front = np.array([front_car.x - car.x])
         else:
             front = np.array([CAR_SAFE_DIST*10])
         if front_front_car is not None:
-            front_front = np.array([front_front_car.x])
+            front_front = np.array([front_front_car.x - car.x])
         else:
             front_front = np.array([CAR_SAFE_DIST*10])
 

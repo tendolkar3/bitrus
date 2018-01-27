@@ -11,8 +11,8 @@ for lane in env.simulation.infinite_road.cars:
         print(env.simulation.infinite_road.get_lane_from_y(car.y), car.get_xy(), isinstance(car, IntelligentCar))
 """
 
-for i in range(100):
-    action = ([-0.1],[1])
+for i in range(1000):
+    action = ([0],[i*10/100])
     inp = input()
     env.render()
     print(env.step(action))
