@@ -1,6 +1,6 @@
 from environment import Env
 from car import IntelligentCar
-
+import time
 
 env = Env()
 env.render()
@@ -12,9 +12,12 @@ for lane in env.simulation.infinite_road.cars:
 """
 
 for i in range(1000):
-    action = ([0],[i*10/100])
-    inp = input()
-    env.render()
-    print(env.step(action))
-
-
+    # action = ([0],[i*10/100])
+    action = None
+    time.sleep(0.05)
+    # inp = input()
+    observation, reward, done, info = env.step(action)
+    if not done:
+        env.render()
+    else:
+        break

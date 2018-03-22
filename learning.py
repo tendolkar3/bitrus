@@ -1,4 +1,4 @@
-import gym
+# import gym
 import math
 import random
 import numpy as np
@@ -8,19 +8,15 @@ from collections import namedtuple
 from itertools import count
 from copy import deepcopy
 from PIL import Image
-
+from environment import Env
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.autograd import Variable
 import torchvision.transforms as T
+from spaces import BoxSpace, DiscreteSpace
 
-is_ipython = 'inline' in matplotlib.get_backend()
-if is_ipython:
-    from IPython import display
-
-plt.ion()
 
 Transition = namedtuple('Transition',
                         ('state', 'action', 'next_state', 'reward'))
@@ -53,12 +49,13 @@ class DQN(nn.Module):
 
     def __init__(self):
         super(DQN, self).__init__()
-        self.fc1 = nn.Linear(4, 256)
-        self.fc2 = nn.Linear(256, 2)
+        self.fc1 = nn.Linear(11, 32)
+        self.fc2 = nn.Linear(32, 2)
         # self.fc3 = nn.Linear(32, 2)
 
     def forward(self, x):
 
+        print(x.shape)
         x = F.relu(self.fc1(x))
         # x = F.relu(self.fc2(x))
         x = self.fc2(x)
@@ -78,11 +75,20 @@ def select_action(state):
         math.exp(-1. * steps_done / EPS_DECAY)
     steps_done += 1
     if sample < eps_threshold:
-        val, ans = model(Variable(state, volatile=True).type(FloatTensor)).data.max(0) # .data.max(1)[1].view(1,1)
-        print('as',ans)
-        return ans[0]
+        # val, ans = model(Variable(state, volatile=True).type(FloatTensor)).data.max(0) # .data.max(1)[1].view(1,1)
+        # print(model(Variable(state, volatile=True).type(FloatTensor)).data)
+        # print('as')
+        action_space = tuple((BoxSpace(low=-math.pi / 4, high=math.pi / 4, shape=(1,)),
+                              BoxSpace(low=-5, high=5, shape=(1,))))
+        _action = tuple((action_space[0].sample(), action_space[1].sample()))
+
+        return _action
     else:
-        return random.randrange(2)
+        action_space = tuple((BoxSpace(low=-math.pi / 4, high=math.pi / 4, shape=(1,)),
+                              BoxSpace(low=-5, high=5, shape=(1,))))
+        _action = tuple((action_space[0].sample(), action_space[1].sample()))
+
+        return _action
 
 
 use_cuda = not torch.cuda.is_available()
@@ -93,7 +99,8 @@ Tensor = FloatTensor
 NUM_EPISODES = 10
 EPISODE_LENGTH = 1000
 
-env = gym.make('CartPole-v0').unwrapped
+env = Env()
+# env = gym.make('CartPole-v0').unwrapped
 BATCH_SIZE = 128
 memory = ReplayMemory(1000)
 optimizer = optim.RMSprop(model.parameters())
@@ -121,18 +128,17 @@ def plot_durations():
         plt.plot(means.numpy())
 
     plt.pause(0.001)  # pause a bit so that plots are updated
-    if is_ipython:
-        display.clear_output(wait=True)
-        display.display(plt.gcf())
 
 
 def optimize_model():
-    print('yes')
+    # print('yes')
     if len(memory) < BATCH_SIZE:
         return
 
     transitions = memory.sample(BATCH_SIZE)
+    # print("t",len(transitions))
     batch = Transition(*zip(*transitions))
+
     non_final_mask = ByteTensor(tuple(map(lambda s: s is not None,
                                           batch.next_state)))
     non_final_next_states = Variable(torch.cat([s for s in batch.next_state
@@ -141,8 +147,9 @@ def optimize_model():
     state_batch = Variable(torch.cat(batch.state))
     action_batch = Variable(torch.cat(batch.action))
     reward_batch = Variable(torch.cat(batch.reward))
+    print(model(state_batch).shape, "aa")
 
-    state_action_values = model(state_batch).gather(1, action_batch)
+    state_action_values = model(state_batch).gather(1, torch.LongTensor([0,1]))
     next_state_values = Variable(torch.zeros(BATCH_SIZE).type(Tensor))
     next_state_values[non_final_mask] = model(non_final_next_states).max(1)[0]
     next_state_values.volatile = False
@@ -158,20 +165,20 @@ def optimize_model():
 
 
 num_episodes = 100
-print("start")
 for i_episode in range(num_episodes):
     # Initialize the environment and state
     state = env.reset()
-    state = FloatTensor(state)
-    state = state.squeeze()
-    print(state,"shape",state.shape)
+    # print(state[5])
+    state = FloatTensor(state).transpose(0,1)
+    print(state.shape)
 
     for t in count():
         # Select and perform an action
         action = select_action(state)
-        print(action, type(action))
+        # print(action, type(action))
         state, reward, done, _ = env.step(action)
-        state = FloatTensor(state).squeeze()
+        state, reward, done, _ = env.step(action)
+        state = FloatTensor(state).transpose(0,1)
         reward = Tensor([reward])
 
         # Observe new state
@@ -181,7 +188,7 @@ for i_episode in range(num_episodes):
             next_state = None
 
         # Store the transition in memory
-        memory.push(state, LongTensor([[action]]), next_state, reward)
+        memory.push(state, FloatTensor([[action]]), next_state, reward)
 
         # Move to the next state
         state = next_state
@@ -192,9 +199,10 @@ for i_episode in range(num_episodes):
             episode_durations.append(t + 1)
             plot_durations()
             break
+        else:
+            env.render()
 
 print('Complete')
-env.render(close=True)
+# env.render(close=True)
 env.close()
-plt.ioff()
 plt.show()

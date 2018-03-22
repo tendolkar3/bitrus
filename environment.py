@@ -11,7 +11,10 @@ class Env(object):
     def __init__(self):
 
         # fixme: modify the observation space
-        self.observation_space = tuple((BoxSpace(low=0, high=np.inf,shape=(1,)),
+        self.observation_space = tuple((BoxSpace(low=0, high=np.inf, shape=(1,)),
+                                        BoxSpace(low=0, high=np.inf, shape=(1,)),
+                                        BoxSpace(low=0, high=np.inf, shape=(1,)),
+                                        BoxSpace(low=0, high=np.inf, shape=(1,)),
                                         BoxSpace(low=0, high=np.inf, shape=(1,)),
                                         DiscreteSpace(n=1),
                                         DiscreteSpace(n=1),
@@ -40,8 +43,8 @@ class Env(object):
         # If self.status is True, then the car is in the game, do not terminate.
         done = not self.status
         info = {}
-        if done:
-            self._terminate_episode()
+        # if done:
+        #     self._terminate_episode()
 
         return observation, reward, done, info
 
@@ -60,6 +63,11 @@ class Env(object):
             observation = self.simulation.get_observation()
         else:
             observation = "TERMINAL STATE"
+            observation = tuple((np.array([float(-1)]), np.array([float(-1)]), np.array([float(-1)]),
+                                 np.array([float(-1)]), np.array([float(-1)]),
+                                 np.array([float(-1)]), np.array([float(-1)]), np.array([float(-1)]),
+                                 np.array([float(-1)]), np.array([float(-1)]), np.array([float(-1)])))
+
         return observation
 
     def _get_reward(self):
@@ -81,7 +89,10 @@ class Env(object):
         for display
         """
         self.display.draw(self.simulation.infinite_road, self.simulation.intelligent_car)
-        # self.display.run(self.simulation.infinite_road)
+        # if not self.status:
+        #     self._terminate_episode()
+
+            # self.display.run(self.simulation.infinite_road)
 
     def seed(self, seed=None):
         """

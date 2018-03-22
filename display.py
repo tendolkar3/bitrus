@@ -1,5 +1,5 @@
 import pygame as pg
-from constants import SCREEN_HEIGHT, SCREEN_WIDTH, BLACK, WHITE, PIXEL_PER_METER, CAR_LENGTH, CAR_SAFE_DIST
+from constants import SCREEN_HEIGHT, SCREEN_WIDTH, BLACK, WHITE, PIXEL_PER_METER, CAR_LENGTH, CAR_SAFE_DIST, CAR_WIDTH
 import math
 from math import sqrt, atan2, cos, sin
 from car import IntelligentCar
@@ -53,7 +53,7 @@ class Display:
         image = pg.transform.rotate(car.image, car.heading-90)
         rel_x,rel_y = infinite_road.get_camera_coords()
         # print(rel_y)
-        x, y = x, y - rel_y + SCREEN_HEIGHT/2
+        x, y = x - 5*CAR_WIDTH/2, y - rel_y + SCREEN_HEIGHT/2 -10*CAR_LENGTH/2
         self.screen.blit(image, (x, y))
         return
 
@@ -76,6 +76,7 @@ class Display:
         # else:
         rel_x, rel_y = intelligent_car.get_xy()
         lane = infinite_road.get_lane_from_y(rel_y)
+        rel_x = 0
         front_left = [(rel_x + 3*(CAR_LENGTH / 2 + CAR_SAFE_DIST), (lane+1)*infinite_road.lane_width),
                       (rel_x + 3 * (CAR_LENGTH / 2 + CAR_SAFE_DIST), (lane+2) * infinite_road.lane_width),
                       (rel_x + 1 * (CAR_LENGTH / 2 + CAR_SAFE_DIST), (lane+2) * infinite_road.lane_width),
@@ -141,7 +142,7 @@ class Display:
             x, y = x, y - rel_y + SCREEN_HEIGHT / 2
             rb.append((x, y))
 
-        print('drawing')
+        # print('drawing')
         pg.draw.polygon(self.screen, (0, 255, 0), lf, 3)
         pg.draw.polygon(self.screen, (0, 255, 0), rf, 3)
         pg.draw.polygon(self.screen, (0, 255, 0), rm, 3)
